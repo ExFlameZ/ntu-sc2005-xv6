@@ -7,6 +7,20 @@
 #include "proc.h"
 
 uint64
+sys_getproccount(void)
+{
+	struct proc *p;
+	int count = 0;
+	
+	for (p = proc; p< &proc[NPROC]; p++){
+		if(p->state != UNUSED)
+			count++;
+	}
+	
+	return count;
+}
+
+uint64
 sys_exit(void)
 {
   int n;
