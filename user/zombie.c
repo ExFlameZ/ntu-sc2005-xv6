@@ -8,6 +8,7 @@
 int
 main(void)
 {
+  printf("PID: %d\n",getpid());
   if(fork() > 0)
     sleep(5);  // Let child exit before parent.
   exit(0);
