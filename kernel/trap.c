@@ -67,6 +67,33 @@ usertrap(void)
     syscall();
   } else if((which_dev = devintr()) != 0){
     // ok
+  } else if(r_scause() == 13 || r_scause() == 15){
+    /* THIS IS THE PART YOU ADD */
+    uint64 va = r_stval();
+    struct proc *p = myproc();
+
+    // Check if the address is within a legal range
+    if(va < p->sz && va > 0 && va < PGROUNDDOWN(p->trapframe->sp)){
+        
+        // 1. Allocate a physical page
+        char *mem = kalloc();
+        if(mem == 0){
+            // Out of physical memory!
+            setkilled(p);
+        } else {
+            memset(mem, 0, PGSIZE); // Clear it
+            
+            // 2. Map it into the page table
+            // We round the VA down to the start of the page
+            if(mappages(p->pagetable, PGROUNDDOWN(va), PGSIZE, (uint64)mem, PTE_W|PTE_U|PTE_R) != 0){
+                kfree(mem);
+                setkilled(p);
+            }
+            // Success! We don't call setkilled. 
+            // The trap will return and the CPU will retry the instruction.
+        }
+    }
+
   } else {
     printf("usertrap(): unexpected scause 0x%lx pid=%d\n", r_scause(), p->pid);
     printf("            sepc=0x%lx stval=0x%lx\n", r_sepc(), r_stval());

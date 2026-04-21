@@ -40,11 +40,16 @@ sys_sbrk(void)
 {
   uint64 addr;
   int n;
+  struct proc *p = myproc();
 
   argint(0, &n);
-  addr = myproc()->sz;
-  if(growproc(n) < 0)
-    return -1;
+  
+  addr = p->sz;
+  
+  // Instead of calling growproc(n), just move the boundary!
+  // growproc(n); // COMMENT THIS OUT
+  p->sz += n; 
+  
   return addr;
 }
 
@@ -90,4 +95,29 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64
+sys_countpp(void)
+{
+  struct proc *p = myproc();
+  uint64 count = 0;
+  pte_t *pte;
+
+  // Loop through the process address space in page-sized increments
+  for(uint64 i = 0; i < p->sz; i += PGSIZE){
+    // walk the page table to find the Page Table Entry
+    pte = walk(p->pagetable, i, 0); 
+    if(pte != 0 && (*pte & PTE_V) && (*pte & PTE_U)){
+      count++;
+    }
+  }
+  return count;
+}
+
+uint64
+sys_countvp(void)
+{
+  struct proc *p = myproc();
+  return p->sz / PGSIZE;
 }
