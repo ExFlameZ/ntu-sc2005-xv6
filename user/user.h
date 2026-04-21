@@ -24,6 +24,8 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int countvp(void);
+int countpp(void);
 // ---- Lab 3 additions -----
 // Counter 
 void ucnt_set(int idx, int val);

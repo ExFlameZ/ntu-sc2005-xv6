@@ -149,3 +149,33 @@ uint64 sys_sem_free(void) {
   argint(0, &semid);
   return sem_free(semid);
 }
+
+uint64
+sys_countvp(void)
+{
+  struct proc *p = myproc();
+  // Round up sz to the nearest page and divide by page size
+  uint64 num_pages = PGROUNDUP(p->sz) / PGSIZE;
+  return num_pages;
+}
+
+uint64
+sys_countpp(void)
+{
+  struct proc *p = myproc();
+  uint64 count = 0;
+  pte_t *pte;
+
+  // Iterate through the virtual address space page by page
+  for(uint64 i = 0; i < p->sz; i += PGSIZE){
+    // walk() looks up the PTE for virtual address i
+    // 0 means "don't allocate new page table pages"
+    pte = walk(p->pagetable, i, 0);
+    
+    // Check if the PTE exists AND the Valid bit is set
+    if(pte != 0 && (*pte & PTE_V)){
+      count++;
+    }
+  }
+  return count;
+}
