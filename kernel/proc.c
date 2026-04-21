@@ -460,7 +460,7 @@ scheduler(void)
     int found = 0;
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
-      if(p->state == RUNNABLE) {
+      if(p->state == RUNNABLE&& (p->pid %2 ==0)) {
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
@@ -472,6 +472,18 @@ scheduler(void)
         // It should have changed its p->state before coming back.
         c->proc = 0;
         found = 1;
+      }
+      release(&p->lock);
+    }
+    for(p = proc; p < &proc[NPROC]; p++){
+      acquire(&p->lock);
+      if(p->state == RUNNABLE && (p->pid % 2 != 0)){
+        p->state = RUNNING;
+        c->proc = p;
+        swtch(&c->context, &p->context);
+
+        c->proc = 0;
+	found = 1;
       }
       release(&p->lock);
     }
